@@ -1,658 +1,656 @@
-# Keyboard and mouse automation based on PyAutoGUI and PySide6
+# 基于 PyAutoGUI 和 PySide6 的键盘鼠标自动化
 
-## 1.`How to install`
+## 1.`如何安装`
 ```bash
-# upgrade pip
+# 升级 pip
 python -m pip install --upgrade pip
 
-# requirement
+# 要求
 pip install PySide6
 pip install pyautogui
 pip install pyinstaller
 ```
 
-## 2. `How to package the python script`
+## 2. `如何打包 python 脚本`
 ```bash
 pyinstaller --onefile --windowed --add-data "icon/gear.png;icon" --add-data "target.csv;." --hidden-import=pyautogui --hidden-import=PySide6.QtWidgets --hidden-import=PySide6.QtCore --hidden-import=PySide6.QtGui .\pydirector.py
 ```
 [text](target.csv) [text](icon) [text](actions.db)
 
-## 3. `How to run`
-> Run the executable in the `dist` folder directly, and follow the instruction to arrange the actions. 
+## 3. `如何运行`
+> 直接运行`dist`文件夹中的可执行文件，并按照说明安排操作。
 
-## 4. `About compiling and data path`
+## 4. `关于编译和数据路径`
 
+### a. 如果`dist`文件夹中没有`actions.db`
+1. **动态创建**:
+- 脚本在运行时使用`create_database()`创建`actions.db`。它不是 PyInstaller 捆绑到 `dist` 文件夹中的预先存在的文件（例如 `target.csv` 或 `icon/gear.png`，我们通过 `--add-data` 明确添加）。
+- `dist` 文件夹仅包含已编译的可执行文件（`pydirector.exe`）和通过 `--add-data` 明确包含的任何文件。由于我们没有使用 `--add-data` 包含 `actions.db`（也不应该这样做，因为它是动态生成的），因此它不会出现在那里。
 
-### a. If `actions.db` is not in the `dist` Folder
-1. **Dynamic Creation**:
-   - The script creates `actions.db` at runtime using `create_database()`. It’s not a pre-existing file that PyInstaller bundles into the `dist` folder (like `target.csv` or `icon/gear.png`, which we explicitly added with `--add-data`).
-   - The `dist` folder only contains the compiled executable (`pydirector.exe`) and any files explicitly included via `--add-data`. Since we didn’t include `actions.db` with `--add-data` (and shouldn’t, as it’s generated dynamically), it won’t appear there.
+2. **由 `DB_PATH` 定义的位置**：
+- 我们使用 `DB_PATH = os.path.join(os.path.expanduser("~"), "actions.db")`，将数据库放在用户的主目录中（例如，Windows 上的 `C:\Users\Lenovo\actions.db`）。这位于 `dist` 文件夹之外，该文件夹通常位于项目目录中（例如，`C:\path\to\your\project\dist`）。
 
-2. **Location Defined by `DB_PATH`**:
-   - We use `DB_PATH = os.path.join(os.path.expanduser("~"), "actions.db")`, which places the database in the user’s home directory (e.g., `C:\Users\Lenovo\actions.db` on Windows). This is outside the `dist` folder, which is typically located in the project directory (e.g., `C:\path\to\your\project\dist`).
-
-3. **PyInstaller `--onefile` Behavior**:
-   - With `--onefile`, all bundled files (like `target.csv` and `gear.png`) are extracted to a temporary directory (`sys._MEIPASS`) at runtime, not the `dist` folder. However, `actions.db` isn’t bundled—it’s created and written to the location specified by `DB_PATH`, which is independent of the `dist` folder or temporary extraction.
-
----
-
-### b. Where to Find `actions.db`
-Since `DB_PATH` is set to `os.path.join(os.path.expanduser("~"), "actions.db")`, the database file is stored in the **user’s home directory**, not the `dist` folder. Here’s how to locate it:
-
-- **On Windows**:
-  - Path: `C:\Users\YourUsername\actions.db`
-  - Example: If the username is `Lenovo`, look in `C:\Users\Lenovo\actions.db`.
-  - How to check:
-    1. Open File Explorer.
-    2. Navigate to `C:\Users\Lenovo` (or press `Win + R`, type `%userprofile%`, and hit Enter).
-    3. Look for `actions.db`.
-
-- **On macOS**:
-  - Path: `/Users/YourUsername/actions.db`
-  - Example: `/Users/lenovo/actions.db`
-  - How to check: Open Finder, press `Cmd + Shift + G`, type `~`, and look for `actions.db`.
-
-- **On Linux**:
-  - Path: `/home/YourUsername/actions.db`
-  - Example: `/home/lenovo/actions.db`
-  - How to check: Open a terminal, type `cd ~` and then `ls -a` to see `actions.db`.
+3. **PyInstaller `--onefile` 行为**：
+- 使用 `--onefile`，所有捆绑文件（如 `target.csv` 和 `gear.png`）在运行时都会提取到临时目录（`sys._MEIPASS`），而不是 `dist` 文件夹。但是，`actions.db` 并未捆绑 - 它被创建并写入 `DB_PATH` 指定的位置，该位置与 `dist` 文件夹或临时提取无关。
 
 ---
 
-### c. Verifying It’s Working
-To confirm the database is where it should be and contains data:
-1. **Run the Executable**:
-   - Execute `dist\pydirector.exe`.
-   - Add a few actions via the GUI (e.g., “Test Move”, “move”, “100,200”).
+### b. 在哪里找到 `actions.db`
+由于 `DB_PATH` 设置为 `os.path.join(os.path.expanduser("~"), "actions.db")`，因此数据库文件存储在**用户的主目录**中，而不是 `dist` 文件夹中。以下是查找方法：
 
-2. **Check the File**:
-   - Navigate to the home directory (e.g., `C:\Users\Lenovo`).
-   - Look for `actions.db`. It should exist and have a non-zero file size if data was written.
+- **在 Windows 上**：
+- 路径：`C:\Users\YourUsername\actions.db`
+- 示例：如果用户名是 `Lenovo`，则查找 `C:\Users\Lenovo\actions.db`。
+- 如何检查：
+1. 打开文件资源管理器。
+2. 导航到 `C:\Users\Lenovo`（或按 `Win + R`，输入 `%userprofile%`，然后按 Enter）。
+3. 查找 `actions.db`。
 
-3. **Inspect the Database**:
-   - Use a SQLite viewer (e.g., DB Browser for SQLite) to open `actions.db` and verify the `actions` table contains the entries.
-   - Or, add a debug print in the code:
-     ```python
-     def get_actions():
-         conn = sqlite3.connect(DB_PATH)
-         cursor = conn.cursor()
-         cursor.execute('SELECT * FROM actions ORDER BY id')
-         actions = cursor.fetchall()
-         conn.close()
-         print(f"Retrieved actions from {DB_PATH}: {actions}")  # Debug
-         return actions
-     ```
-     Recompile with `--console` and run to see the output.
+- **在 macOS 上**：
+- 路径：`/Users/YourUsername/actions.db`
+- 示例：`/Users/lenovo/actions.db`
+- 如何检查：打开 Finder，按 `Cmd + Shift + G`，输入 `~`，然后查找 `actions.db`。
 
-4. **Check Logs**:
-   - Open `pydirector.log` (in the same directory as the executable or wherever it’s configured to write) to see if database operations are logged successfully.
+- **在 Linux 上**：
+- 路径：`/home/YourUsername/actions.db`
+- 示例：`/home/lenovo/actions.db`
+- 如何检查：打开终端，输入`cd ~`，然后输入`ls -a` 以查看`actions.db`。
 
 ---
 
-### d. Why
-- **Design Intent**: By setting `DB_PATH` to the home directory, we ensured the database is stored in a persistent, writable location outside the temporary or build directories. This is what allows data to persist across runs, unlike the original `resource_path('actions.db')` approach that used `sys._MEIPASS`.
-- **No Need for `dist`**: The `dist` folder is just for the executable and bundled resources, not runtime-generated files like `actions.db`.
+### c. 验证其是否正常工作
+要确认数据库位于其应在的位置并包含数据：
+1. **运行可执行文件**：
+- 执行`dist\pydirector.exe`。
+- 通过 GUI 添加一些操作（例如，“Test Move”、“move”、“100,200”）。
+
+2. **检查文件**：
+- 导航到主目录（例如，`C:\Users\Lenovo`）。
+- 查找`actions.db`。如果写入了数据，它应该存在并且文件大小不为零。
+
+3. **检查数据库**：
+- 使用 SQLite 查看器（例如，SQLite 的 DB Browser）打开 `actions.db` 并验证 `actions` 表是否包含条目。
+- 或者，在代码中添加调试打印：
+```python
+def get_actions()：
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+cursor.execute('SELECT * FROM action ORDER BY id')
+action = cursor.fetchall()
+conn.close()
+print(f"Retrieved action from {DB_PATH}: {actions}") # Debug
+return action
+```
+使用 `--console` 重新编译并运行以查看输出。
+
+4. **检查日志**：
+- 打开 `pydirector.log`（与可执行文件位于同一目录中或配置为写入的任何位置）以查看数据库操作是否已成功记录。
 
 ---
 
-## 5.`To keep the "actions.db" in the "dist" Folder`
-To keep the `actions.db` in the `dist` folder alongside `pydirector.exe` (e.g., for portability or organization), we can modify `DB_PATH` to point there instead. However, this comes with caveats:
+### d.为什么
+- **设计意图**：通过将 `DB_PATH` 设置为主目录，我们确保数据库存储在临时目录或构建目录之外的持久、可写位置。这允许数据在运行期间持续存在，与使用 `sys._MEIPASS` 的原始 `resource_path('actions.db')` 方法不同。
+- **无需 `dist`**：`dist` 文件夹仅用于可执行文件和捆绑资源，而不是运行时生成的文件，如 `actions.db`。
 
-#### Modified Code
+---
+
+## 5.`将“actions.db”保存在“dist”文件夹中`
+要将 `actions.db` 保存在 `dist` 文件夹中，与 `pydirector.exe` 一起保存（例如，为了便于移植或组织），我们可以修改 `DB_PATH` 以指向那里。但是，这有一些注意事项：
+
+#### 修改后的代码
 ```python
 import os
 import sys
 
-# Set DB_PATH to the directory containing the executable
-if getattr(sys, 'frozen', False):  # Running as PyInstaller executable
-    BASE_DIR = os.path.dirname(sys.executable)  # Directory of pydirector.exe
+# 将 DB_PATH 设置为包含可执行文件的目录
+if getattr(sys, 'frozen',False): # 作为 PyInstaller 可执行文件运行
+BASE_DIR = os.path.dirname(sys.executable) # pydirector.exe 的目录
 else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Directory of pydirector.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # pydirector.py 的目录
 DB_PATH = os.path.join(BASE_DIR, "actions.db")
 ```
 
-- **Explanation**:
-  - `sys.executable`: Path to the running executable (e.g., `C:\path\to\project\dist\pydirector.exe`).
-  - `os.path.dirname(sys.executable)`: Extracts the directory (e.g., `C:\path\to\project\dist`).
-  - `DB_PATH`: Becomes `C:\path\to\project\dist\actions.db` when compiled.
-  - When running with Python, it uses the script’s directory.
+- **说明**:
+- `sys.executable`: 运行可执行文件的路径（例如，`C:\path\to\project\dist\pydirector.exe`）。
+- `os.path.dirname(sys.executable)`: 提取目录（例如，`C:\path\to\project\dist`）。
+- `DB_PATH`: 编译后变为 `C:\path\to\project\dist\actions.db`。
+- 使用 Python 运行时，它使用脚本的目录。
 
-- **Caveat**:
-  - The `dist` folder must be writable. If we distribute the executable to another location (e.g., `C:\Program Files`), it might fail due to permission issues unless run as admin.
-  - For portability, users would need to copy the entire `dist` folder, including `actions.db`, to retain data.
+- **警告**：
+- `dist` 文件夹必须是可写的。如果我们将可执行文件分发到另一个位置（例如 `C:\Program Files`），除非以管理员身份运行，否则它可能会因权限问题而失败。
+- 为了便于移植，用户需要复制整个 `dist` 文件夹，包括 `actions.db`，以保留数据。
 
-#### Recompile and Test
-Recompile with the existing command and run `pydirector.exe` from `dist`. Check if `actions.db` appears there.
-
----
-
-### Recommendation
-- **Keep It in Home Directory**: Storing `actions.db` in `~/actions.db` is safer and more user-friendly, as it avoids permission issues and keeps data tied to the user, not the executable’s location.
-- **No Action Needed**: Since it’s working now, there’s no need to change anything unless we have a specific reason to move it to `dist`.
+#### 重新编译和测试
+使用现有命令重新编译并从 `dist` 运行 `pydirector.exe`。检查 `actions.db` 是否出现在那里。
 
 ---
 
-### Final Confirmation
-To keep everything—including `actions.db`, `target.csv`, and `icon/gear.png`—in the same folder as the executable (`pydirector.exe`). This makes the application portable, meaning users can move the executable and its associated files to any directory and it will still work, as long as the folder remains writable. Here’s how to modify the code and PyInstaller command to achieve this.
+### 建议
+- **将其保存在主目录中**：将 `actions.db` 存储在 `~/actions.db` 中更安全且更方便用户使用，因为它可以避免权限问题并将数据与用户绑定，而不是可执行文件的位置。
+- **无需采取任何措施**：既然它现在就可以运行，除非我们有特殊原因将其移动到`dist`，否则无需更改任何内容。
 
 ---
 
-### Why This Works
-- **Executable Directory**: When compiled with PyInstaller, `sys.executable` gives the path to the running executable (e.g., `C:\path\to\dist\pydirector.exe`). Using `os.path.dirname(sys.executable)`, we can dynamically reference the folder containing the executable.
-- **Consistency**: By adjusting all file paths (`actions.db`, `target.csv`, `gear.png`) to use this directory, everything stays together.
-- **Portability**: Users can copy the entire folder (executable + files) to any location, and the app will still function without hardcoding paths.
+### 最终确认
+将所有内容（包括`actions.db`、`target.csv`和`icon/gear.png`）保存在与可执行文件（`pydirector.exe`）相同的文件夹中。这使得应用程序可移植，这意味着用户可以将可执行文件及其相关文件移动到任何目录，只要该文件夹保持可写，它仍将正常工作。以下是如何修改代码和 PyInstaller 命令以实现此目的。
 
 ---
 
-### Step-by-Step Solution
+### 为什么有效
+- **可执行文件目录**：使用 PyInstaller 编译时，`sys.executable` 提供正在运行的可执行文件的路径（例如，`C:\path\to\dist\pydirector.exe`）。使用 `os.path.dirname(sys.executable)`，我们可以动态引用包含可执行文件的文件夹。
+- **一致性**：通过调整所有文件路径（`actions.db`、`target.csv`、`gear.png`）以使用此目录，所有内容都保持在一起。
+- **可移植性**：用户可以将整个文件夹（可执行文件 + 文件）复制到任何位置，应用程序仍将运行，而无需硬编码路径。
 
-#### 1. Modify the Code
-Update the script to use the executable’s directory as the base path for all files (`actions.db`, `target.csv`, and `gear.png`). Replace `resource_path()` with a new function and adjust `DB_PATH`.
+---
 
-Here’s the revised code snippet for key sections:
+### 分步解决方案
+
+#### 1. 修改代码
+更新脚本以使用可执行文件的目录作为所有文件（`actions.db`、`target.csv` 和 `gear.png`）的基本路径。用新函数替换 `resource_path()` 并调整 `DB_PATH`。
+
+以下是关键部分的修订代码片段：
 
 ```python
 import os
 import sys
 
-# Determine the base directory (where the executable or script is)
+# 确定基目录（可执行文件或脚本所在的位置）
 def get_base_path():
-    if getattr(sys, 'frozen', False):  # Running as PyInstaller executable
-        return os.path.dirname(sys.executable)  # Directory of pydirector.exe
-    return os.path.dirname(os.path.abspath(__file__))  # Directory of pydirector.py
+if getattr(sys, 'frozen', False): # 作为 PyInstaller 可执行文件运行
+return os.path.dirname(sys.executable) # pydirector.exe 的目录
+return os.path.dirname(os.path.abspath(__file__)) # pydirector.py 的目录
 
 BASE_PATH = get_base_path()
 DB_PATH = os.path.join(BASE_PATH, "actions.db")
 
-# Update resource_path to use BASE_PATH instead of sys._MEIPASS
+# 更新 resource_path 以使用 BASE_PATH 而不是 sys._MEIPASS
 def resource_path(relative_path):
-    return os.path.join(BASE_PATH, relative_path)
+return os.path.join(BASE_PATH,relative_path)
 
-# Database Functions (using DB_PATH)
-def create_database(db_name='actions.db'):  # db_name ignored for consistency
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS actions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            action_name TEXT,
-            action_type TEXT,
-            parameters TEXT,
-            timestamp TEXT
-        )
-    ''')
-    conn.commit()
-    conn.close()
-    logging.debug(f"Database created at: {DB_PATH}")
+# 数据库函数（使用 DB_PATH）
+def create_database(db_name='actions.db'): # 为保持一致性，忽略 db_name
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS action (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+action_name TEXT,
+action_type TEXT,
+parameters TEXT,
+timestamp TEXT
+)
+''')
+conn.commit()
+conn.close()
+logs.debug(f"数据库创建于：{DB_PATH}")
 
 def add_action(action_name, action_type, parameters):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    timestamp = datetime.datetime.now().isoformat()
-    cursor.execute('''
-        INSERT INTO actions (action_name, action_type, parameters, timestamp)
-        VALUES (?, ?, ?, ?)
-    ''', (action_name, action_type, parameters, timestamp))
-    conn.commit()
-    conn.close()
-    logging.debug(f"Action added: {action_name}")
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+timestamp = datetime.datetime.now().isoformat()
+cursor.execute('''
+INSERT INTO action (action_name, action_type, parameters, timestamp)
+VALUES (?, ?, ?, ?)
+''', (action_name, action_type, parameters, timestamp))
+conn.commit()
+conn.close()
+logging.debug(f"Action Added: {action_name}")
 
-# Update other database functions similarly (get_actions, update_action, delete_action)
+# 类似地更新其他数据库函数 (get_actions, update_action, delete_action)
 
-# CSV Reading (update to use resource_path)
-def read_target_ids(csv_file='target.csv'):  # Adjusted default to match usage
-    csv_path = resource_path(csv_file)
-    try:
-        with open(csv_path, 'r') as f:
-            reader = csv.reader(f)
-            target_ids = [row[0] for row in reader]
-        return target_ids
-    except FileNotFoundError:
-        logging.error(f"CSV file not found: {csv_path}")
-        print("Error: target.csv not found.")
-        return []
+# CSV 读取 (更新以使用 resource_path)
+def read_target_ids(csv_file='target.csv'): # 调整默认值以匹配用法
+csv_path = resource_path(csv_file)
+try:
+with open(csv_path, 'r') as f:
+reader = csv.reader(f)
+target_ids = [row[0] for row in reader]
+return target_ids
+except FileNotFoundError:
+logging.error(f"未找到 CSV 文件：{csv_path}")
+print("Error: target.csv 未找到。”)
+return []
 
-# Update tray icon in MainWindow.__init__
+# 更新 MainWindow 中的托盘图标。__init__
 self.tray_icon = QSystemTrayIcon(QIcon(resource_path("icon/gear.png")), self)
 ```
 
-- **Key Changes**:
-  - Replaced `resource_path()` logic with `BASE_PATH`, which points to the executable’s directory when bundled or the script’s directory when run with Python.
-  - Set `DB_PATH` to `BASE_PATH + "actions.db"`.
-  - Updated `read_target_ids()` and tray icon to use `resource_path()` with the new base path.
-  - Kept database functions using `DB_PATH`.
+- **关键更改**:
+- 已替换`resource_path()` 逻辑与 `BASE_PATH` 结合，后者指向捆绑时的可执行文件目录或使用 Python 运行时的脚本目录。
+- 将 `DB_PATH` 设置为 `BASE_PATH + "actions.db"`。
+- 更新 `read_target_ids()` 和托盘图标以使用带有新基本路径的 `resource_path()`。
+- 保留使用 `DB_PATH` 的数据库函数。
 
-#### 2. Update PyInstaller Command
-Since we want `target.csv` and `icon/gear.png` in the same folder as the executable, we still need to include them with `--add-data`, but they’ll be accessed from the executable’s directory at runtime.
+#### 2. 更新 PyInstaller 命令
+由于我们希望 `target.csv` 和 `icon/gear.png` 与可执行文件放在同一个文件夹中，我们仍需要使用 `--add-data` 将它们包含在内，但它们将在运行时从可执行文件的目录中访问。
 
-Use this command:
+使用此命令：
 ```
 pyinstaller --onefile --windowed --add-data "icon/gear.png;icon" --add-data "target.csv;." --hidden-import=pyautogui --hidden-import=PySide6.QtWidgets --hidden-import=PySide6.QtCore --hidden-import=PySide6.QtGui --icon=icon/gear.png .\pydirector.py
 ```
 
-- **Notes**:
-  - `--add-data "icon/gear.png;icon"`: Includes `gear.png` in the `icon` subfolder of the bundle, which `resource_path("icon/gear.png")` will resolve to.
-  - `--add-data "target.csv;."`: Includes `target.csv` in the root of the bundle, which `resource_path("target.csv")` will resolve to.
-  - `actions.db` isn’t included because it’s created dynamically at runtime.
+- **注意**:
+- `--add-data "icon/gear.png;icon"`: 在包的 `icon` 子文件夹中包含 `gear.png`，`resource_path("icon/gear.png")` 将解析为该文件夹。
+- `--add-data "target.csv;."`: 在包的根文件夹中包含 `target.csv`，`resource_path("target.csv")` 将解析为该文件夹。
+- `actions.db` 未包含在内，因为它是在运行时动态创建的。
 
-#### 3. Test the Setup
-1. **Run with Python**:
-   - Ensure `target.csv` and `icon/gear.png` are in the same directory as `pydirector.py`.
-   - Run `python pydirector.py`.
-   - Add actions and check that `actions.db` appears in the same directory as `pydirector.py`.
+#### 3. 测试设置
+1. **使用 Python 运行**:
+- 确保 `target.csv` 和 `icon/gear.png` 与 `pydirector.py` 位于同一目录中。
+- 运行 `python pydirector.py`。
+- 添加操作并检查 `actions.db` 是否出现在与 `pydirector.py` 相同的目录中。
 
-2. **Compile and Run**:
-   - Run the PyInstaller command above.
-   - Go to `dist`, where we can see `pydirector.exe`.
-   - Copy `target.csv` and `icon/gear.png` from the project folder to `dist` (or a subfolder like `icon/` for `gear.png`) manually after building, since `--onefile` doesn’t leave them there automatically:
-     ```
-     dist/
-     ├── pydirector.exe
-     ├── target.csv
-     └── icon/
-         └── gear.png
-     ```
-   - Run `pydirector.exe`.
-   - Add actions and confirm `actions.db` is created in `dist` alongside `pydirector.exe`.
+2. **编译并运行**:
+- 运行上面的 PyInstaller 命令。
+- 转到 `dist`，我们可以看到 `pydirector.exe`。
+- 构建后，手动将“target.csv”和“icon/gear.png”从项目文件夹复制到“dist”（或“gear.png”的子文件夹，如“icon/”），因为“--onefile”不会自动将它们留在那里：
+```
+dist/
+═── pydirector.exe
+═── target.csv
+└── icon/
+└── gear.png
+```
+- 运行“pydirector.exe”。
+- 添加操作并确认“actions.db”与“pydirector.exe”一起在“dist”中创建。
 
-3. **Verify Portability**:
-   - Move the entire `dist` folder to another location (e.g., `D:\TestFolder`).
-   - Run `pydirector.exe` from there and ensure it still works (reads `target.csv`, uses `gear.png`, and writes to `actions.db` in the new location).
-
----
-
-### What Happens at Runtime
-- **Script Mode (`python pydirector.py`)**:
-  - `BASE_PATH` = directory of `pydirector.py`.
-  - `DB_PATH` = `<script_dir>/actions.db`.
-  - `resource_path("target.csv")` = `<script_dir>/target.csv`.
-  - `resource_path("icon/gear.png")` = `<script_dir>/icon/gear.png`.
-
-- **Executable Mode (`pydirector.exe`)**:
-  - `BASE_PATH` = directory of `pydirector.exe` (e.g., `C:\path\to\dist`).
-  - `DB_PATH` = `C:\path\to\dist\actions.db`.
-  - `resource_path("target.csv")` = `C:\path\to\dist\target.csv` (extracted from bundle).
-  - `resource_path("icon/gear.png")` = `C:\path\to\dist\icon\gear.png` (extracted from bundle).
+3. **验证可移植性**：
+- 将整个“dist”文件夹移动到另一个位置（例如“D:\TestFolder”）。
+- 从那里运行“pydirector.exe”并确保它仍然有效（读取“target.csv”，使用“gear.png”，并在新位置写入“actions.db”）。
 
 ---
 
-### Caveats
-- **Write Permissions**: The executable’s directory must be writable for `actions.db` to be created/updated. If we place it in a restricted location (e.g., `C:\Program Files`), it might fail unless run as admin.
-- **Manual File Placement**: After building with `--onefile`, PyInstaller doesn’t leave `target.csv` and `gear.png` in `dist`—they’re embedded in the executable. We will need to manually copy them to `dist` (or distribute them with the executable) for the app to find them at runtime.
+### 运行时发生的情况
+- **脚本模式（`python pydirector.py`）**：
+- `BASE_PATH` = `pydirector.py` 的目录。
+- `DB_PATH` = `<script_dir>/actions.db`。
+- `resource_path("target.csv")` = `<script_dir>/target.csv`。
+- `resource_path("icon/gear.png")` = `<script_dir>/icon/gear.png`。
 
-#### Alternative: `--onedir` Mode
-If we want PyInstaller to automatically place all files in `dist` without manual copying, use `--onedir` instead:
+- **可执行模式（`pydirector.exe`）**：
+- `BASE_PATH` = `pydirector.exe` 的目录（例如，`C:\path\to\dist`）。
+- `DB_PATH` = `C:\path\to\dist\actions.db`。
+- `resource_path("target.csv")` = `C:\path\to\dist\target.csv`（从包中提取）。
+- `resource_path("icon/gear.png")` = `C:\path\to\dist\icon\gear.png`（从包中提取）。
+
+---
+
+### 注意事项
+- **写入权限**：可执行文件的目录必须可写，才能创建/更新 `actions.db`。如果我们将其放在受限制的位置（例如，`C:\Program Files`），除非以管理员身份运行，否则可能会失败。
+- **手动文件放置**：使用 `--onefile` 构建后，PyInstaller 不会将 `target.csv` 和 `gear.png` 留在 `dist` 中 - 它们嵌入在可执行文件中。我们需要手动将它们复制到 `dist`（或将它们与可执行文件一起分发），以便应用程序在运行时找到它们。
+
+#### 替代方案：`--onedir` 模式
+如果我们希望 PyInstaller 自动将所有文件放置在 `dist` 中而无需手动复制，请改用 `--onedir`：
 ```
 pyinstaller --onedir --windowed --add-data "icon/gear.png;icon" --add-data "target.csv;." --hidden-import=pyautogui --hidden-import=PySide6.QtWidgets --hidden-import=PySide6.QtCore --hidden-import=PySide6.QtGui --icon=icon/gear.png .\pydirector.py
 ```
-- Result: `dist/pydirector/` contains `pydirector.exe`, `target.csv`, `icon/gear.png`, and dependencies. `actions.db` will be created there too.
-- Trade-off: Larger folder instead of a single file, but simpler
-
-
+- 结果：`dist/pydirector/` 包含 `pydirector.exe`、`target.csv`、`icon/gear.png` 和依赖项。`actions.db` 也将在那里创建。
+- 权衡：使用更大的文件夹而不是单个文件，但更简单
 
 ___
 
-Let’s compare the two approaches for handling file paths in the PyInstaller-compiled application: the original `resource_path()` function we used versus the updated approach with `get_base_path()` that I suggested for keeping everything in the same folder as the executable. I’ll break down their mechanics, implications, and suitability for the goal of keeping all files (`actions.db`, `target.csv`, `icon/gear.png`) alongside `pydirector.exe`.
+让我们比较一下在 PyInstaller 编译的应用程序中处理文件路径的两种方法：我们使用的原始 `resource_path()` 函数与我建议的更新方法 `get_base_path()`，该方法用于将所有内容保存在与可执行文件相同的文件夹中。我将分解它们的机制、含义和适用性，以实现将所有文件（`actions.db`、`target.csv`、`icon/gear.png`）与 `pydirector.exe` 一起保存的目标。
 
 ---
 
-### Original Approach: `resource_path()`
+### 原始方法：`resource_path()`
 ```python
 def resource_path(relative_path):
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath("."), relative_path)
+if hasattr(sys, '_MEIPASS'):
+return os.path.join(sys._MEIPASS,relative_path)
+return os.path.join(os.path.abspath("."),relative_path)
 ```
 
-#### How It Works
-- **When Running as a Script (`python pydirector.py`)**:
-  - `hasattr(sys, '_MEIPASS')` is `False` because `_MEIPASS` only exists in a PyInstaller bundle.
-  - `os.path.abspath(".")`: Returns the absolute path of the current working directory (where we ran the script from, e.g., `C:\path\to\project` if we ran `python pydirector.py` there).
-  - `os.path.join(os.path.abspath("."), relative_path)`: Combines the current directory with `relative_path` (e.g., `"actions.db"`, `"target.csv"`, `"icon/gear.png"`).
-  - Example: If run from `C:\path\to\project`, `resource_path("actions.db")` → `C:\path\to\project\actions.db`.
+#### 工作原理
+- **作为脚本运行时（`python pydirector.py`）**:
+- `hasattr(sys, '_MEIPASS')` 为 `False`，因为 `_MEIPASS` 仅存在于 PyInstaller 包中。
+- `os.path.abspath(".")`：返回当前工作目录的绝对路径（我们从哪里运行脚本，例如，如果我们在那里运行 `python pydirector.py`，则为 `C:\path\to\project`）。
+- `os.path.join(os.path.abspath("."),relative_path)`：将当前目录与 `relative_path` 合并（例如，`"actions.db"`、`"target.csv"`、`"icon/gear.png"`）。
+- 示例：如果从 `C:\path\to\project` 运行，则 `resource_path("actions.db")` → `C:\path\to\project\actions.db`。
 
-- **When Running as a PyInstaller Executable (`pydirector.exe`)**:
-  - `hasattr(sys, '_MEIPASS')` is `True` because PyInstaller sets `_MEIPASS` to a temporary directory where bundled files are extracted (e.g., `C:\Users\Lenovo\AppData\Local\Temp\_MEIxxxx`).
-  - `os.path.join(sys._MEIPASS, relative_path)`: Combines the temporary directory with `relative_path`.
-  - Example: `resource_path("actions.db")` → `C:\Users\Lenovo\AppData\Local\Temp\_MEIxxxx\actions.db`.
+- **当作为 PyInstaller 可执行文件 (`pydirector.exe`) 运行时**:
+- `hasattr(sys, '_MEIPASS')` 为 `True`，因为 PyInstaller 将 `_MEIPASS` 设置为提取捆绑文件的临时目录 (例如，`C:\Users\Lenovo\AppData\Local\Temp\_MEIxxxx`)。
+- `os.path.join(sys._MEIPASS,relative_path)`: 将临时目录与 `relative_path` 合并。
+- 示例：`resource_path("actions.db")` → `C:\Users\Lenovo\AppData\Local\Temp\_MEIxxxx\actions.db`。
 
-#### Implications
-1. **Script Mode**:
-   - Works fine for `target.csv` and `icon/gear.png` if they’re in the current directory.
-   - `actions.db` is created in the current working directory (e.g., `C:\path\to\project`), which is persistent and writable, so data is saved across runs.
+#### 含义
+1. **脚本模式**:
+- 如果 `target.csv` 和 `icon/gear.png` 位于当前目录中，则可正常工作。
+- `actions.db` 在当前工作目录（例如 `C:\path\to\project`）中创建，该目录是持久且可写的，因此数据在运行期间会保存。
 
-2. **Executable Mode (`--onefile`)**:
-   - **Pros**: Correctly locates bundled files (`target.csv`, `icon/gear.png`) in the temporary directory if included with `--add-data`.
-   - **Cons**:
-     - `actions.db` is created in `sys._MEIPASS`, which is:
-       - **Temporary**: Deleted when the app closes, so data doesn’t persist.
-       - **Read-Only for SQLite**: SQLite often fails to write reliably in this directory due to its nature, causing the original issue.
-     - Files are scattered: Bundled files are in `sys._MEIPASS`, but `actions.db` isn’t in the `dist` folder or alongside the executable.
+2. **可执行模式（`--onefile`）**：
+- **优点**：如果使用 `--add-data` 包含，则可正确定位临时目录中的捆绑文件（`target.csv`、`icon/gear.png`）。
+- **缺点**：
+- `actions.db` 在 `sys._MEIPASS` 中创建，该目录：
+- **临时**：应用关闭时删除，因此数据不会保留。
+- **SQLite 只读**：由于其性质，SQLite 通常无法在此目录中可靠地写入，从而导致最初的问题。
+- 文件分散：捆绑文件位于 `sys._MEIPASS` 中，但 `actions.db` 不在 `dist` 文件夹中或可执行文件旁边。
 
-3. **Portability**:
-   - Poor for `actions.db`: Data is lost because it’s tied to a temporary location.
-   - Requires manual placement of `target.csv` and `gear.png` alongside the executable post-build, but they’re accessed from `sys._MEIPASS`.
+3. **可移植性**:
+- `actions.db` 较差：数据丢失，因为它与临时位置绑定。
+- 需要在构建后手动将 `target.csv` 和 `gear.png` 放置在可执行文件旁边，但它们可以从 `sys._MEIPASS` 访问。
 
 ---
 
-### New Approach: `get_base_path()`
+### 新方法：`get_base_path()`
 ```python
 def get_base_path():
-    if getattr(sys, 'frozen', False):  # Running as PyInstaller executable
-        return os.path.dirname(sys.executable)  # Directory of pydirector.exe
-    return os.path.dirname(os.path.abspath(__file__))  # Directory of pydirector.py
+if getattr(sys, 'frozen', False): # 作为 PyInstaller 可执行文件运行
+return os.path.dirname(sys.executable) # pydirector.exe 的目录
+return os.path.dirname(os.path.abspath(__file__)) # pydirector.py 的目录
 
 BASE_PATH = get_base_path()
 
 def resource_path(relative_path):
-    return os.path.join(BASE_PATH, relative_path)
+return os.path.join(BASE_PATH,relative_path)
 
 DB_PATH = os.path.join(BASE_PATH, "actions.db")
 ```
 
-#### How It Works
-- **When Running as a Script (`python pydirector.py`)**:
-  - `getattr(sys, 'frozen', False)` is `False` (PyInstaller’s flag for bundled apps isn’t set).
-  - `os.path.abspath(__file__)`: Returns the absolute path of `pydirector.py` (e.g., `C:\path\to\project\pydirector.py`).
-  - `os.path.dirname(...)`: Extracts the directory (e.g., `C:\path\to\project`).
-  - `BASE_PATH`: `C:\path\to\project`.
-  - Examples:
-    - `DB_PATH` → `C:\path\to\project\actions.db`.
-    - `resource_path("target.csv")` → `C:\path\to\project\target.csv`.
-    - `resource_path("icon/gear.png")` → `C:\path\to\project\icon\gear.png`.
+#### 工作原理
+- **作为脚本运行时（`python pydirector.py`）**：
+- `getattr(sys, 'frozen', False)` 为 `False`（PyInstaller 的标志捆绑应用程序的路径未设置）。
+- `os.path.abspath(__file__)`：返回 `pydirector.py` 的绝对路径（例如，`C:\path\to\project\pydirector.py`）。
+- `os.path.dirname(...)`：提取目录（例如，`C:\path\to\project`）。
+- `BASE_PATH`：`C:\path\to\project`。
+- 示例：
+- `DB_PATH` → `C:\path\to\project\actions.db`。
+- `resource_path("target.csv")` → `C:\path\to\project\target.csv`。
+- `resource_path("icon/gear.png")` → `C:\path\to\project\icon\gear.png`。
 
-- **When Running as a PyInstaller Executable (`pydirector.exe`)**:
-  - `getattr(sys, 'frozen', False)` is `True` (set by PyInstaller).
-  - `sys.executable`: Path to the executable (e.g., `C:\path\to\dist\pydirector.exe`).
-  - `os.path.dirname(sys.executable)`: Directory of the executable (e.g., `C:\path\to\dist`).
-  - `BASE_PATH`: `C:\path\to\dist`.
-  - Examples:
-    - `DB_PATH` → `C:\path\to\dist\actions.db`.
-    - `resource_path("target.csv")` → `C:\path\to\dist\target.csv`.
-    - `resource_path("icon/gear.png")` → `C:\path\to\dist\icon\gear.png`.
+- **当作为 PyInstaller 可执行文件 (`pydirector.exe`) 运行时**:
+- `getattr(sys, 'frozen', False)` 为 `True` (由 PyInstaller 设置)。
+- `sys.executable`：可执行文件的路径 (例如，`C:\path\to\dist\pydirector.exe`)。
+- `os.path.dirname(sys.executable)`：可执行文件的目录 (例如，`C:\path\to\dist`)。
+- `BASE_PATH`：`C:\path\to\dist`。
+- 示例：
+- `DB_PATH` → `C:\path\to\dist\actions.db`。
+- `resource_path("target.csv")` → `C:\path\to\dist\target.csv`。
+- `resource_path("icon/gear.png")` → `C:\path\to\dist\icon\gear.png`。
 
-#### Implications
-1. **Script Mode**:
-   - All files (`actions.db`, `target.csv`, `gear.png`) are created/accessed in the script’s directory (e.g., `C:\path\to\project`).
-   - Consistent with the original working setup when running with Python.
+#### 含义
+1. **脚本模式**:
+- 所有文件（`actions.db`、`target.csv`、`gear.png`）都在脚本目录中创建/访问（例如，`C:\path\to\project`）。
+- 与使用 Python 运行时的原始工作设置一致。
 
-2. **Executable Mode (`--onefile`)**:
-   - **Pros**:
-     - All files are tied to the executable’s directory (e.g., `C:\path\to\dist`), which is persistent and can be writable (if not in a restricted location like `C:\Program Files`).
-     - `actions.db` is created alongside `pydirector.exe`, solving the persistence issue.
-     - Portable: Move the `dist` folder anywhere, and everything stays together.
-   - **Cons**:
-     - Requires `target.csv` and `gear.png` to be manually placed in `dist` post-build (or distributed with the executable) since `--onefile` embeds them in the executable but doesn’t leave them in `dist`.
-     - Directory must be writable, or SQLite writes will fail (e.g., needs admin rights in restricted folders).
+2. **可执行模式（`--onefile`）**:
+- **优点**:
+- 所有文件都绑定到可执行文件的目录（例如，`C:\path\to\dist`），该目录是持久的并且可以写入（如果不在像`C:\Program Files`这样的受限位置）。
+- `actions.db` 与 `pydirector.exe` 一起创建，解决了持久性问题。
+- 可移植性：将 `dist` 文件夹移动到任何地方，所有内容都会保持在一起。
+- **缺点**：
+- 需要在构建后将 `target.csv` 和 `gear.png` 手动放置在 `dist` 中（或与可执行文件一起分发），因为 `--onefile` 将它们嵌入可执行文件中，但不会将它们留在 `dist` 中。
+- 目录必须是可写的，否则 SQLite 写入将失败（例如，需要在受限文件夹中拥有管理员权限）。
 
-3. **Portability**:
-   - Excellent: The entire app (executable + files) can be moved as a single unit, and it will work as long as the folder is writable.
-
----
-
-### Comparison Table
-
-| **Aspect**                   | **Original (`resource_path`)**                         | **New (`get_base_path`)**                     |
-| ---------------------------- | ------------------------------------------------------ | --------------------------------------------- |
-| **Script Mode Location**     | Current working directory (e.g., `C:\path\to\project`) | Script directory (e.g., `C:\path\to\project`) |
-| **Executable Mode Location** | Temporary dir (`sys._MEIPASS`)                         | Executable dir (e.g., `C:\path\to\dist`)      |
-| **Database Persistence**     | No (temp dir deleted on exit)                          | Yes (stored alongside executable)             |
-| **File Access**              | Bundled files in `sys._MEIPASS`, DB elsewhere          | All files in executable’s dir                 |
-| **Portability**              | Poor (DB lost, files scattered)                        | High (everything moves together)              |
-| **Setup Effort**             | Simple but flawed for DB                               | Requires manual file placement post-build     |
-| **Write Permission Issues**  | High (temp dir often read-only)                        | Possible (if dir is restricted)               |
+3. **可移植性**：
+- 优秀：整个应用程序（可执行文件 + 文件）可以作为一个单元移动，只要文件夹可写，它就可以工作。
 
 ---
 
-### Why `get_base_path()` Meets the Goal
-We want to keep all the files in the same folder where the executable is. But, the original `resource_path()` fails at this because:
-- It puts `actions.db` in a temporary directory that’s deleted, not alongside `pydirector.exe`.
-- While it accesses bundled `target.csv` and `gear.png` correctly from `sys._MEIPASS`, it doesn’t align them with the database’s location.
+### 比较表
 
-The `get_base_path()` approach:
-- Ensures `actions.db`, `target.csv`, and `gear.png` are all referenced relative to the executable’s directory (e.g., `C:\path\to\dist`).
-- Makes the app portable by keeping everything together in a single, persistent folder.
+| **方面** | **原始（`resource_path`）** | **新（`get_base_path`）** |
+|---------------------------- | ------------------------------------------------------ | --------------------------------------------- |
+| **脚本模式位置** | 当前工作目录（例如，`C:\path\to\project`）| 脚本目录（例如，`C:\path\to\project`）|
+| **可执行模式位置** | 临时目录（`sys._MEIPASS`）| 可执行目录（例如，`C:\path\to\dist`）|
+| **数据库持久性** | 否（退出时删除临时目录）| 是（与可执行文件一起存储）|
+| **文件访问** | `sys._MEIPASS` 中的捆绑文件，DB 在其他位置 | 可执行文件的目录中的所有文件 |
+| **可移植性** | 差（DB 丢失，文件分散）| 高（所有内容一起移动）|
+| **设置工作量** | 简单但对 DB 有缺陷 | 构建后需要手动放置文件 |
+| **写入权限问题** | 高（临时目录通常是只读的） | 可能（如果目录受到限制） |
+
 
 ---
 
-### Addressing the `--onefile` Limitation
-With `--onefile`, PyInstaller embeds `target.csv` and `gear.png` inside `pydirector.exe` and extracts them to `sys._MEIPASS` at runtime. However, the code looks for them in `BASE_PATH` (e.g., `C:\path\to\dist`), not `sys._MEIPASS`.
+### 为什么 `get_base_path()` 满足目标
+我们希望将所有文件保存在可执行文件所在的同一文件夹中。但是，原始的 `resource_path()` 在这方面失败了，因为：
+- 它将 `actions.db` 放在已删除的临时目录中，而不是与 `pydirector.exe` 放在一起。
+- 虽然它从 `sys._MEIPASS` 正确访问捆绑的 `target.csv` 和 `gear.png`，但它没有将它们与数据库的位置对齐。
 
-#### Option 1: Manual File Placement
-- After building, copy `target.csv` and `icon/gear.png` to `dist`:
-  ```
-  dist/
-  ├── pydirector.exe
-  ├── target.csv
-  └── icon/
-      └── gear.png
-  ```
-- Run `pydirector.exe`, and `actions.db` will be created there too.
-
-#### Option 2: Use `--onedir` Mode
-- Command:
-  ```
-  pyinstaller --onedir --windowed --add-data "icon/gear.png;icon" --add-data "target.csv;." --hidden-import=pyautogui --hidden-import=PySide6.QtWidgets --hidden-import=PySide6.QtCore --hidden-import=PySide6.QtGui --icon=icon/gear.png .\pydirector.py
-  ```
-- Result: `dist/pydirector/` contains all files automatically:
-  ```
-  dist/pydirector/
-  ├── pydirector.exe
-  ├── target.csv
-  ├── icon/
-  │   └── gear.png
-  └── [other PyInstaller dependencies]
-  ```
-- `actions.db` will be created in the same folder.
-
-#### Option 3: Hybrid Approach
-- Keep `--onefile` and modify `resource_path()` to use `sys._MEIPASS` for read-only files (`target.csv`, `gear.png`) but `BASE_PATH` for `actions.db`:
-  ```python
-  def resource_path(relative_path):
-      if hasattr(sys, '_MEIPASS'):
-          return os.path.join(sys._MEIPASS, relative_path)  # For bundled files
-      return os.path.join(BASE_PATH, relative_path)
-  
-  DB_PATH = os.path.join(BASE_PATH, "actions.db")  # Always alongside executable
-  ```
-- This keeps `target.csv` and `gear.png` bundled but places `actions.db` in `dist`.
+`get_base_path()` 方法：
+- 确保 `actions.db`、`target.csv` 和 `gear.png` 都是相对于可执行文件的目录引用的（例如，`C:\path\to\dist`）。
+- 通过将所有内容放在一个持久文件夹中，使应用程序可移植。
 
 ---
 
-### Recommendation
-- **For Simplicity**: Use `--onedir` with `get_base_path()`. Everything is automatically placed in `dist/pydirector/`, and it’s portable.
-- **For Single File**: Use `--onefile` with manual placement (Option 1) or the hybrid approach (Option 3). 
+### 解决 `--onefile` 限制
+使用 `--onefile`，PyInstaller 将 `target.csv` 和 `gear.png` 嵌入 `pydirector.exe` 中，并在运行时将它们提取到 `sys._MEIPASS`。但是，代码在 `BASE_PATH`（例如 `C:\path\to\dist`）中查找它们，而不是 `sys._MEIPASS`。
 
+#### 选项 1：手动文件放置
+- 构建后，将 `target.csv` 和 `icon/gear.png` 复制到 `dist`：
+```
+dist/
+═── pydirector.exe
+═── target.csv
+└── icon/
+└── gear.png
+```
+- 运行 `pydirector.exe`，也会在那里创建 `actions.db`。
 
+#### 选项 2：使用 `--onedir` 模式
+- 命令：
+```
+pyinstaller --onedir --windowed --add-data "icon/gear.png;icon" --add-data "target.csv;." --hidden-import=pyautogui --hidden-import=PySide6.QtWidgets --hidden-import=PySide6.QtCore --hidden-import=PySide6.QtGui --icon=icon/gear.png .\pydirector.py
+```
+- 结果：`dist/pydirector/` 自动包含所有文件：
+```
+dist/pydirector/
+═── pydirector.exe
+═── target.csv
+═── icon/
+│ └── gear.png
+└── [其他 PyInstaller 依赖项]
+```
+- `actions.db` 将在同一文件夹中创建。
 
-## 5. How does the code work ???
-
-### How the Code Works
-
-"PyDirector," is a GUI-based automation tool built with PySide6 (Qt for Python), PyAutoGUI, SQLite, and other libraries. It allows users to define, manage, and execute mouse/keyboard automation actions stored in a database, optionally looping over a list of target IDs from a CSV file. Here’s a detailed breakdown:
-
-#### 1. **Imports and Setup**
-- **Libraries**: 
-  - `sys`, `os`: Handle file paths and executable behavior (e.g., PyInstaller support).
-  - `sqlite3`: Manage a database for storing actions.
-  - `datetime`, `time`: Handle timestamps and delays.
-  - `csv`: Read target IDs from a CSV file.
-  - `logging`: Log events to `pydirector.log` for debugging.
-  - `PySide6`: Build the GUI (QMainWindow, QTableWidget, etc.).
-  - `pyautogui`: Perform automation tasks (mouse movement, clicks, typing, etc.).
-- **Logging**: Configured to write debug/info/error messages to `pydirector.log`.
-- **Paths**: 
-  - `get_base_path()` and `resource_path()` ensure the script works whether run as a Python file or a PyInstaller executable.
-  - `DB_PATH` points to `actions.db` in the base directory.
-
-#### 2. **Database Management**
-- **Schema**: The `actions` table in `actions.db` has columns: `id`, `action_name`, `action_type`, `parameters`, `timestamp`.
-- **Functions**:
-  - `create_database()`: Creates the table if it doesn’t exist.
-  - `add_action()`, `update_action()`, `delete_action()`: CRUD operations for actions.
-  - `get_actions()`: Retrieves all actions for display or execution.
-
-#### 3. **CSV Handling**
-- `read_target_ids()`: Reads a single-column CSV file (`target.csv`) to get a list of target IDs. These IDs can be used in actions (e.g., typing them).
-
-#### 4. **Automation Logic**
-- **Core Function**: `execute_action(action, target_id=None)`:
-  - Takes an action tuple from the database (`id`, `name`, `type`, `parameters`, `timestamp`) and an optional `target_id`.
-  - Supports these `action_type`s:
-    - `move`: Moves mouse to `(x, y)` with `duration=0.5`.
-    - `click`: Single click (`left` or `right`).
-    - `double_click`: Double click (`left` or `right`).
-    - `right_click`: Right-click at current position.
-    - `drag`: Drags mouse to `(x, y)` with `duration=0.5`.
-    - `hotkey`: Presses key combinations (e.g., `ctrl,c`).
-    - `type`: Types text, optionally replacing `{target_id}` with the CSV value.
-    - `wait`: Pauses for specified seconds.
-  - Errors are logged and printed if an action fails.
-- **Run Function**: `run_automation(loop_count=0, stop_flag=None)`:
-  - Loads target IDs and actions.
-  - Loops either over all target IDs (`loop_count=0`) or a specified number of times.
-  - For each loop:
-    - Picks a `target_id` (from CSV or loop index).
-    - Executes all actions sequentially, passing the `target_id`.
-    - Adds a `time.sleep(1.0)` between actions.
-  - Stops if `stop_flag()` returns `True` (e.g., Esc pressed).
-
-#### 5. **GUI (MainWindow)**
-- **Components**:
-  - **Mouse Position Label**: Updates every 100ms via a `QTimer`.
-  - **Table**: Displays actions from the database.
-  - **Buttons**: Add, Edit, Delete actions; Start automation.
-  - **Loop Input**: A QSpinBox to set the number of loops (0 = use all target IDs).
-  - **System Tray**: Minimizes to tray with Show/Quit options.
-  - **Shortcut**: Esc key stops automation.
-- **Behavior**:
-  - Minimizes to tray on close; double-click tray icon to restore.
-  - Actions are managed via an `ActionDialog` popup.
-  - Automation hides the window, runs, and shows a tray notification when done/interrupted.
-
-#### 6. **Execution Flow**
-1. User adds actions via GUI (e.g., "Move to 100,200", "Type Hello").
-2. User sets loop count and clicks "Start Automation".
-3. Script reads `target.csv`, executes actions for each target ID, and logs progress.
-4. User can press Esc to stop; tray notifications report the outcome.
-
----
-
-### Controlling the Interval Between Actions
-
-#### Current Timing Control
-- **Between Actions**: In `run_automation()`, there’s a hardcoded `time.sleep(1.0)` after each `execute_action()` call. This means a **1-second delay** separates the end of one action from the start of the next, regardless of the action type.
-- **Within Actions**: For `move` and `drag` actions, `pyautogui.moveTo()` and `pyautogui.dragTo()` use `duration=0.5`, which controls how long the mouse takes to reach its destination (0.5 seconds). Other actions (e.g., `click`, `type`) execute instantly or at PyAutoGUI’s default speed.
-
-#### Is `duration` a Method to Control Intervals?
-- **Not Directly for Intervals Between Actions**: The `duration` parameter in `moveTo` and `dragTo` controls the **duration of the movement itself**, not the pause between actions. For example:
-  - `pyautogui.moveTo(100, 200, duration=0.5)` takes 0.5 seconds to move the mouse, then the script immediately proceeds to `time.sleep(1.0)` before the next action.
-  - Changing `duration` affects how “smooth” or “slow” the movement looks, not the gap between actions.
-- **Suitable for Specific Actions**: It’s a timing control only for `move` and `drag`, not for `click`, `type`, etc., which don’t use `duration`.
-
-#### How to Control the Interval Between Actions
-To adjust the timing **between** actions (the pause after one action completes and before the next begins), you have these options:
-
-1. **Modify the `time.sleep(1.0)` in `run_automation`**:
-   - Current code:
-     ```python
-     for action in actions:
-         if stop_flag and stop_flag():
-             return False
-         logging.debug(f"Executing action: {action}")
-         execute_action(action, target_id)
-         time.sleep(1.0)  # Fixed 1-second delay
-     ```
-   - Change `1.0` to your desired delay (e.g., `0.5` for 0.5 seconds, `2.0` for 2 seconds):
-     ```python
-     time.sleep(0.5)  # Now 0.5 seconds between actions
-     ```
-
-2. **Make the Delay Configurable**:
-   - Add a UI element (e.g., a QSpinBox) for users to set the delay:
-     ```python
-     # In MainWindow.__init__
-     self.delay_label = QLabel("Delay Between Actions (seconds):")
-     self.delay_input = QSpinBox()
-     self.delay_input.setMinimum(0)
-     self.delay_input.setMaximum(10)  # Max 10 seconds
-     self.delay_input.setValue(1)  # Default 1 second
-     self.layout.addWidget(self.delay_label)
-     self.layout.addWidget(self.delay_input)
-     ```
-   - Update `run_automation` to use this value:
-     ```python
-     def start_automation(self):
-         loop_count = self.loop_input.value()
-         delay = self.delay_input.value()  # Get delay from UI
-         self.is_running = True
-         self.stop_requested = False
-         self.hide()
-         logging.debug(f"Starting automation with {loop_count} loops and {delay} sec delay")
-         print("Automation started. Press Esc to stop.")
-         completed = run_automation(loop_count, delay, stop_flag=lambda: self.stop_requested)
-         self.is_running = False
-         # ... rest of the method ...
-
-     def run_automation(loop_count=0, delay=1.0, stop_flag=None):
-         # ... existing code ...
-         for action in actions:
-             if stop_flag and stop_flag():
-                 return False
-             logging.debug(f"Executing action: {action}")
-             execute_action(action, target_id)
-             time.sleep(delay)  # Use configurable delay
-         # ... rest of the function ...
-     ```
-
-3. **Store Delay in the Database**:
-   - Add a `delay_after` column to the `actions` table:
-     ```python
-     def create_database(db_name='actions.db'):
-         conn = sqlite3.connect(DB_PATH)
-         cursor = conn.cursor()
-         cursor.execute('''
-             CREATE TABLE IF NOT EXISTS actions (
-                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                 action_name TEXT,
-                 action_type TEXT,
-                 parameters TEXT,
-                 delay_after REAL DEFAULT 1.0,  -- New column
-                 timestamp TEXT
-             )
-         ''')
-         conn.commit()
-         conn.close()
-     ```
-   - Update `add_action`, `update_action`, and `ActionDialog` to include `delay_after`.
-   - Modify `run_automation` to use each action’s delay:
-     ```python
-     for action in actions:
-         if stop_flag and stop_flag():
-             return False
-         logging.debug(f"Executing action: {action}")
-         execute_action(action, target_id)
-         time.sleep(action[4])  # Use delay_after from database
-     ```
-
-#### Total Time Between Actions
-The effective interval between the start of one action and the start of the next is:
-- **Action Execution Time** (e.g., 0.5 seconds for `move` with `duration=0.5`, near-instant for `click`) + **Delay** (currently 1.0 second).
-- Example:
-  - `moveTo(100, 200, duration=0.5)`: 0.5s movement + 1.0s sleep = **1.5s total**.
-  - `click()`: ~0s execution + 1.0s sleep = **1.0s total**.
-
-#### Recommendation
-- **Best Approach**: Modify `time.sleep(1.0)` or make it configurable via the UI (Option 2). This gives you flexibility without overcomplicating the database.
-- **Duration’s Role**: Use `duration` to fine-tune `move` and `drag` speeds, but rely on `time.sleep()` for the interval between all actions.
-
----
-
-### Example Modification
-Here’s how you could implement a configurable delay:
+#### 选项 3：混合方法
+- 保留 `--onefile` 并修改 `resource_path()`，以便对只读文件（`target.csv`、`gear.png`）使用 `sys._MEIPASS`，但对 `actions.db` 使用 `BASE_PATH`：
 ```python
-# In MainWindow.__init__, after loop_input:
-self.delay_label = QLabel("Delay Between Actions (seconds):")
+def resource_path(relative_path):
+if hasattr(sys, '_MEIPASS'):
+return os.path.join(sys._MEIPASS,relative_path) # 对于捆绑文件
+return os.path.join(BASE_PATH,relative_path)
+
+DB_PATH = os.path.join(BASE_PATH,"actions.db") # 始终与可执行文件一起
+```
+- 这会将 `target.csv` 和 `gear.png` 捆绑在一起，但将 `actions.db` 放在 `dist` 中。
+
+---
+
+### 建议
+- **为简单起见**：使用 `--onedir` 和 `get_base_path()`。所有内容都会自动放置在 `dist/pydirector/` 中，并且可移植。
+- **对于单个文件**：使用 `--onefile` 和手动放置（选项 1）或混合方法（选项 3）。
+
+## 5. 代码如何工作???
+
+### 代码如何工作
+
+“PyDirector”是一个基于 GUI 的自动化工具，使用 PySide6（Qt for Python）、PyAutoGUI、SQLite 和其他库构建。它允许用户定义、管理和执行存储在数据库中的鼠标/键盘自动化操作，可选择循环遍历 CSV 文件中的目标 ID 列表。以下是详细分类：
+
+#### 1. **导入和设置**
+- **库**：
+- `sys`、`os`：处理文件路径和可执行行为（例如，PyInstaller 支持）。
+- `sqlite3`：管理用于存储操作的数据库。
+- `datetime`、`time`：处理时间戳和延迟。
+- `csv`：从 CSV 文件中读取目标 ID。
+- `logging`：将事件记录到 `pydirector.log` 以供调试。
+- `PySide6`：构建 GUI（QMainWindow、QTableWidget 等）。
+- `pyautogui`：执行自动化任务（鼠标移动、点击、打字等）。
+- **日志记录**：配置为将调试/信息/错误消息写入 `pydirector.log`。
+- **路径**：
+- `get_base_path()` 和 `resource_path()` 确保脚本无论是作为 Python 文件还是 PyInstaller 可执行文件运行都能正常工作。
+- `DB_PATH` 指向基础目录中的 `actions.db`。
+
+#### 2. **数据库管理**
+- **架构**：`actions.db` 中的 `actions` 表包含以下列：`id`、`action_name`、`action_type`、`parameters`、`timestamp`。
+-**函数**：
+-`create_database()`：如果表不存在，则创建表。
+-`add_action()`、`update_action()`、`delete_action()`：操作的 CRUD 操作。
+-`get_actions()`：检索所有操作以进行显示或执行。
+
+
+#### 3.**CSV 处理**
+-`read_target_ids()`：读取单列 CSV 文件（`target.csv`）以获取目标 ID 列表。这些 ID 可用于操作（例如，键入它们）。
+
+#### 4. **自动化逻辑**
+- **核心函数**：`execute_action(action, target_id=None)`：
+- 从数据库获取一个动作元组（`id`、`name`、`type`、`parameters`、`timestamp`）和一个可选的`target_id`。
+- 支持以下`action_type`：
+- `move`：将鼠标移动到`(x, y)`，`duration=0.5`。
+- `click`：单击（`left` 或 `right`）。
+- `double_click`：双击（`left` 或 `right`）。
+- `right_click`：在当前位置单击。
+- `drag`：将鼠标拖动到`(x, y)`，`duration=0.5`。
+- `hotkey`：按下组合键（例如，`ctrl,c`）。
+- `type`：输入文本，可选择用 CSV 值替换 `{target_id}`。
+- `wait`：暂停指定的秒数。
+- 如果操作失败，则记录并打印错误。
+- **运行函数**：`run_automation(loop_count=0, stop_flag=None)`：
+- 加载目标 ID 和操作。
+- 循环遍历所有目标 ID（`loop_count=0`）或指定次数。
+- 对于每个循环：
+- 选择一个 `target_id`（来自 CSV 或循环索引）。
+- 按顺序执行所有操作，传递 `target_id`。
+- 在操作之间添加 `time.sleep(1.0)`。
+- 如果 `stop_flag()` 返回 `True`（例如，按下 Esc），则停止。
+
+#### 5. **GUI（主窗口）**
+- **组件**：
+- **鼠标位置标签**：通过 `QTimer` 每 100 毫秒更新一次。
+- **表格**：显示数据库中的操作。
+- **按钮**：添加、编辑、删除操作；启动自动化。
+- **循环输入**：QSpinBox 用于设置循环次数（0 = 使用所有目标 ID）。
+- **系统托盘**：最小化到托盘，显示/退出选项。
+- **快捷方式**：Esc 键停止自动化。
+- **行为**：
+- 关闭时最小化到托盘；双击托盘图标恢复。
+- 通过 `ActionDialog` 弹出窗口管理操作。
+- 自动化隐藏窗口、运行并在完成/中断时显示托盘通知。
+
+#### 6. **执行流程**
+1. 用户通过 GUI 添加操作（例如，“移动到 100,200”、“输入 Hello”）。
+2. 用户设置循环计数并单击“启动自动化”。
+3. 脚本读取 `target.csv`，为每个目标 ID 执行操作并记录进度。
+4. 用户可以按 Esc 停止；托盘通知报告结果。
+
+---
+
+### 控制操作之间的间隔
+
+#### 当前时间控制
+- **操作之间**：在 `run_automation()` 中，每次 `execute_action()` 调用后都有一个硬编码的 `time.sleep(1.0)`。这意味着无论操作类型如何，一个操作的结束与下一个操作的开始之间都有 **1 秒的延迟**。
+- **在操作中**：对于 `move` 和 `drag` 操作，`pyautogui.moveTo()` 和 `pyautogui.dragTo()` 使用 `duration=0.5`，它控制鼠标到达目的地所需的时间（0.5 秒）。其他操作（例如 `click`、`type`）立即执行或以 PyAutoGUI 的默认速度执行。
+
+#### `duration` 是一种控制间隔的方法吗？
+- **不直接用于操作之间的间隔**：`moveTo` 和 `dragTo` 中的 `duration` 参数控制**移动本身的持续时间**，而不是操作之间的暂停。例如：
+- `pyautogui.moveTo(100, 200, duration=0.5)` 需要 0.5 秒来移动鼠标，然后脚本在下一个操作之前立即继续执行 `time.sleep(1.0)`。
+- 更改 `duration` 会影响移动看起来的“平滑”或“缓慢”，而不是动作之间的间隙。
+- **适用于特定动作**：它只是针对 `move` 和 `drag` 的计时控制，不适用于 `click`、`type` 等不使用 `duration` 的动作。
+
+#### 如何控制操作之间的间隔
+要调整操作之间的**时间**（一个操作完成后，下一个操作开始之前的暂停），您有以下选择：
+
+1. **修改 `run_automation` 中的 `time.sleep(1.0)`**：
+- 当前代码：
+```python
+for action in action:
+if stop_flag and stop_flag():
+return False
+logging.debug(f"Executing action: {action}")
+execute_action(action, target_id)
+time.sleep(1.0) # 固定 1 秒延迟
+```
+- 将 `1.0` 更改为您想要的延迟（例如，`0.5` 表示 0.5 秒，`2.0` 表示 2 秒）：
+```python
+time.sleep(0.5) # 现在操作之间间隔 0.5 秒
+```
+
+2. **使延迟可配置**：
+- 添加 UI 元素（例如 QSpinBox）供用户设置延迟：
+```python
+# 在 MainWindow.__init__ 中
+self.delay_label = QLabel("操作之间的延迟（秒）：")
+self.delay_input = QSpinBox()
+self.delay_input.setMinimum(0)
+self.delay_input.setMaximum(10) # 最大 10 秒
+self.delay_input.setValue(1) # 默认 1 秒
+self.layout.addWidget(self.delay_label)
+self.layout.addWidget(self.delay_input)
+```
+
+- 更新 `run_automation` 以使用此值：
+```python
+def start_automation(self):
+loop_count = self.loop_input.value()
+delay = self.delay_input.value() # 从 UI 获取延迟
+self.is_running = True
+self.stop_requested = False
+self.hide()
+logs.debug(f"以 {loop_count} 个循环和 {delay} 秒延迟启动自动化")
+print("自动化已启动。按 Esc 停止。")
+complete = run_automation(loop_count, delay, stop_flag=lambda: self.stop_requested)
+self.is_running = False
+# ... 方法的其余部分 ...
+
+def run_automation(loop_count=0, delay=1.0, stop_flag=None):
+# ... 现有代码 ...
+for action in action:
+if stop_flag and stop_flag():
+return False
+logging.debug(f"执行操作：{action}")
+execute_action(action, target_id)
+time.sleep(delay) # 使用可配置延迟
+# ... 其余函数 ...
+```
+
+3. **将延迟存储在数据库中**:
+- 向 `actions` 表添加 `delay_after` 列:
+```python
+def create_database(db_name='actions.db'):
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS action (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+action_name TEXT,
+action_type TEXT,
+parameters TEXT,
+delay_after REAL DEFAULT 1.0, -- 新列
+timestamp TEXT
+)
+''')
+conn.commit()
+conn.close()
+```
+- 更新 `add_action`、`update_action` 和 `ActionDialog` 以包含 `delay_after`。
+- 修改 `run_automation` 以使用每个操作的延迟：
+```python
+for action in action:
+if stop_flag and stop_flag():
+return False
+logs.debug(f"Executing action: {action}")
+execute_action(action, target_id)
+time.sleep(action[4]) # 使用数据库中的 delay_after
+```
+
+#### 操作之间的总时间
+一个操作开始和下一个操作开始之间的有效间隔是：
+- **操作执行时间**（例如，`move` 为 0.5 秒，`duration=0.5`，`click` 几乎是即时的）+ **延迟**（当前为 1.0 秒）。
+- 示例：
+- `moveTo(100, 200, duration=0.5)`：0.5s 移动 + 1.0s 睡眠 = **1.5s 总计**。
+- `click()`：~0s 执行 + 1.0s 睡眠 = **1.0s 总计**。
+
+#### 建议
+- **最佳方法**：修改 `time.sleep(1.0)` 或使其可通过 UI 进行配置（选项 2）。这可为您提供灵活性，而不会使数据库过于复杂。
+- **Duration 的作用**：使用 `duration` 来微调 `move` 和 `drag` 速度，但依赖 `time.sleep()` 来确定所有操作之间的间隔。
+
+---
+
+### 示例修改
+以下是您可以如何实现可配置的延迟：
+```python
+# 在 MainWindow.__init__ 中，loop_input 之后：
+self.delay_label = QLabel("操作之间的延迟（秒）：")
 self.delay_input = QSpinBox()
 self.delay_input.setMinimum(0)
 self.delay_input.setMaximum(10)
@@ -660,39 +658,38 @@ self.delay_input.setValue(1)
 self.layout.addWidget(self.delay_label)
 self.layout.addWidget(self.delay_input)
 
-# Update start_automation:
+# 更新 start_automation：
 def start_automation(self):
-    loop_count = self.loop_input.value()
-    delay = self.delay_input.value()
-    self.is_running = True
-    self.stop_requested = False
-    self.hide()
-    logging.debug(f"Starting automation with {loop_count} loops and {delay} sec delay")
-    print("Automation started. Press Esc to stop.")
-    completed = run_automation(loop_count, delay, stop_flag=lambda: self.stop_requested)
-    self.is_running = False
-    # ... rest of the method ...
+loop_count = self.loop_input.value()
+delay = self.delay_input.value()
+self.is_running = True
+self.stop_requested = False
+self.hide()
+logs.debug(f"以 {loop_count} 循环和 {delay} 秒延迟启动自动化")
+print("自动化已启动。按 Esc 键停止。")
+complete = run_automation(loop_count, delay, stop_flag=lambda: self.stop_requested)
+self.is_running = False
+# ... 其余方法 ...
 
-# Update run_automation signature:
+# 更新 run_automation 签名：
 def run_automation(loop_count=0, delay=1.0, stop_flag=None):
-    # ... existing code ...
-    for action in actions:
-        if stop_flag and stop_flag():
-            return False
-        logging.debug(f"Executing action: {action}")
-        execute_action(action, target_id)
-        time.sleep(delay)  # Configurable delay
-    # ... rest of the function ...
+# ... 现有代码 ...
+for action in action:
+if stop_flag and stop_flag():
+return False
+logs.debug(f"执行操作：{action}")
+execute_action(action, target_id)
+time.sleep(delay) # 可配置延迟
+# ... 其余函数 ...
 ```
 
-Now, users can set the delay (0-10 seconds) in the GUI, and it applies uniformly between actions.
+现在，用户可以在 GUI 中设置延迟（0-10 秒），并且它在操作之间统一应用。
 
 ---
 
-### Final Thoughts
-To control intervals, tweaking `time.sleep()` is the most straightforward and effective method.
-
+### 最后的想法
+要控制间隔，调整 `time.sleep()` 是最直接、最有效的方法。
 
 ## 7. `Todo`
 
-- Add `interruption` in the middle of running (CTRL-C seems taking no effect)
+- 在运行过程中添加 `interruption`（CTRL-C 似乎不起作用）
